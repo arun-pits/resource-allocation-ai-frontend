@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
@@ -21,7 +21,13 @@ const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
 
+  const [data, setData] = useState(null);
+
   useEffect(() => {
+    fetch('http://localhost:8000/api/')  // Django runs on port 8000
+      .then(res => res.json())
+      .then(data => setData(data));
+
     const urlParams = new URLSearchParams(window.location.href.split('?')[1])
     const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
     if (theme) {
@@ -41,6 +47,7 @@ const App = () => {
         fallback={
           <div className="pt-3 text-center">
             <CSpinner color="primary" variant="grow" />
+            {data ? <p>{data.message}</p> : <p>Loading...</p>}
           </div>
         }
       >
@@ -53,6 +60,7 @@ const App = () => {
         </Routes>
       </Suspense>
     </HashRouter>
+
   )
 }
 

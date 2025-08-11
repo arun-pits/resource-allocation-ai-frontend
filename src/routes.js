@@ -26,6 +26,10 @@ const Buttons = React.lazy(() => import('./views/buttons/buttons/Buttons'))
 const ButtonGroups = React.lazy(() => import('./views/buttons/button-groups/ButtonGroups'))
 const Dropdowns = React.lazy(() => import('./views/buttons/dropdowns/Dropdowns'))
 
+// Employees
+const AddEmployee = React.lazy(() => import('./views/employee/add-employee/AddEmployee'))
+const ViewEmployee = React.lazy(() => import('./views/employee/view-employee/ViewEmployee'))
+
 //Forms
 const ChecksRadios = React.lazy(() => import('./views/forms/checks-radios/ChecksRadios'))
 const FloatingLabels = React.lazy(() => import('./views/forms/floating-labels/FloatingLabels'))
@@ -97,6 +101,9 @@ const routes = [
   { path: '/notifications/modals', name: 'Modals', element: Modals },
   { path: '/notifications/toasts', name: 'Toasts', element: Toasts },
   { path: '/widgets', name: 'Widgets', element: Widgets },
+
+  { path: '/employee/add-employee', name: 'AddEmployee', element: AddEmployee },
+  { path: '/employee/view-employee', name: 'ViewEmployee', element: ViewEmployee },
 ]
 
 export default routes
