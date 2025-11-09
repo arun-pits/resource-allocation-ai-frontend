@@ -30,6 +30,10 @@ const Dropdowns = React.lazy(() => import('./views/buttons/dropdowns/Dropdowns')
 const AddEmployee = React.lazy(() => import('./views/employee/add-employee/AddEmployee'))
 const ViewEmployee = React.lazy(() => import('./views/employee/view-employee/ViewEmployee'))
 
+// Projects
+const AddProject = React.lazy(() => import('./views/project/add-project/AddProject'))
+const ViewProject = React.lazy(() => import('./views/project/view-project/ViewProject'))
+
 //Forms
 const ChecksRadios = React.lazy(() => import('./views/forms/checks-radios/ChecksRadios'))
 const FloatingLabels = React.lazy(() => import('./views/forms/floating-labels/FloatingLabels'))
@@ -104,6 +108,9 @@ const routes = [
 
   { path: '/employee/add-employee', name: 'AddEmployee', element: AddEmployee },
   { path: '/employee/view-employee', name: 'ViewEmployee', element: ViewEmployee },
+
+  { path: '/project/add-project', name: 'AddProject', element: AddProject },
+  { path: '/project/view-project', name: 'ViewProject', element: ViewProject },
 ]
 
 export default routes
