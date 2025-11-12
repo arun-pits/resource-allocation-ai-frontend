@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     CButton,
     CCard,
@@ -9,9 +9,17 @@ import {
     CFormInput,
     CFormLabel,
     CRow,
+    CSpinner,
+    CAlert
 } from '@coreui/react'
+import { useParams, useNavigate } from 'react-router-dom'
+import CIcon from '@coreui/icons-react'
+import { cilArrowLeft, cilSave } from '@coreui/icons'
 
-const AddEmployee = () => {
+const EditEmployee = () => {
+    const { id } = useParams()
+    const navigate = useNavigate()
+
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -23,8 +31,38 @@ const AddEmployee = () => {
         manager: ''
     });
 
-    const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false)
+    const [fetchLoading, setFetchLoading] = useState(true)
+    const [errors, setErrors] = useState({})
+    const [alert, setAlert] = useState({ show: false, message: '', type: '' })
+
+    // Fetch employee data when component mounts
+    useEffect(() => {
+        const fetchEmployee = async () => {
+            try {
+                setFetchLoading(true)
+                const response = await fetch(`http://localhost:8000/api/employees/${id}/`)
+
+                if (!response.ok) {
+                    throw new Error('Employee not found')
+                }
+
+                const employeeData = await response.json()
+                setFormData(employeeData)
+                setErrors({})
+            } catch (error) {
+                console.error('Error fetching employee:', error)
+                showAlert('Employee not found. Redirecting...', 'danger')
+                setTimeout(() => navigate('/employees'), 2000)
+            } finally {
+                setFetchLoading(false)
+            }
+        }
+
+        if (id) {
+            fetchEmployee()
+        }
+    }, [id, navigate])
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -66,11 +104,16 @@ const AddEmployee = () => {
         return Object.keys(newErrors).length === 0;
     }
 
+    const showAlert = (message, type) => {
+        setAlert({ show: true, message, type })
+        setTimeout(() => setAlert({ show: false, message: '', type: '' }), 5000)
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!validateForm()) {
-            alert('Please fix the form errors before submitting.');
+            showAlert('Please fix the form errors before submitting.', 'warning')
             return;
         }
 
@@ -78,10 +121,10 @@ const AddEmployee = () => {
         setErrors({});
 
         try {
-            console.log('Submitting form data:', formData);
+            console.log('Updating employee data:', formData);
 
-            const response = await fetch('http://localhost:8000/api/employees/', {
-                method: 'POST',
+            const response = await fetch(`http://localhost:8000/api/employees/${id}/`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -91,48 +134,63 @@ const AddEmployee = () => {
             const responseData = await response.json();
 
             if (response.ok) {
-                alert('Employee added successfully!');
-                // Reset form
-                setFormData({
-                    first_name: '',
-                    last_name: '',
-                    employee_email: '',
-                    employee_ph_no: '',
-                    designation: '',
-                    employee_id: '',
-                    department: '',
-                    manager: ''
-                });
+                showAlert('Employee updated successfully!', 'success')
+                // Optionally redirect back to listing page after success
+                setTimeout(() => navigate('/employees'), 1500)
             } else {
                 // Handle Django validation errors
                 if (responseData.errors) {
                     setErrors(responseData.errors);
-                    alert('Please fix the form errors.');
+                    showAlert('Please fix the form errors.', 'warning')
                 } else {
-                    alert(`Error adding employee: ${responseData.message || 'Unknown error'}`);
+                    showAlert(`Error updating employee: ${responseData.message || 'Unknown error'}`, 'danger')
                 }
                 console.error('Server error response:', responseData);
             }
         } catch (error) {
             console.error('Network error:', error);
-            alert('Network error: Could not connect to server. Make sure Django server is running.');
+            showAlert('Network error: Could not connect to server.', 'danger')
         } finally {
             setLoading(false);
         }
     }
 
+    const handleCancel = () => {
+        if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+            navigate('/employees')
+        }
+    }
+
     const resetForm = () => {
-        setFormData({
-            first_name: '',
-            last_name: '',
-            employee_email: '',
-            employee_ph_no: '',
-            designation: '',
-            employee_id: '',
-            department: '',
-            manager: ''
-        });
-        setErrors({});
+        if (window.confirm('Are you sure you want to reset all changes?')) {
+            // Refetch original data
+            fetch(`http://localhost:8000/api/employees/${id}/`)
+                .then(response => response.json())
+                .then(employeeData => {
+                    setFormData(employeeData)
+                    setErrors({})
+                    showAlert('Form reset to original values', 'info')
+                })
+                .catch(error => {
+                    console.error('Error resetting form:', error)
+                    showAlert('Error resetting form', 'danger')
+                })
+        }
+    }
+
+    if (fetchLoading) {
+        return (
+            <CRow>
+                <CCol xs={12}>
+                    <CCard className="mb-4">
+                        <CCardBody className="text-center py-5">
+                            <CSpinner color="primary" />
+                            <div className="mt-3">Loading employee data...</div>
+                        </CCardBody>
+                    </CCard>
+                </CCol>
+            </CRow>
+        )
     }
 
     return (
@@ -140,11 +198,31 @@ const AddEmployee = () => {
             <CCol xs={12}>
                 <CCard className="mb-4">
                     <CCardHeader>
-                        <strong>Add New Employee</strong>
+                        <div className="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Edit Employee</strong>
+                                <small> Update employee information</small>
+                            </div>
+                            <CButton
+                                color="secondary"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate('/employees')}
+                            >
+                                <CIcon icon={cilArrowLeft} className="me-2" />
+                                Back to List
+                            </CButton>
+                        </div>
                     </CCardHeader>
                     <CCardBody>
+                        {alert.show && (
+                            <CAlert color={alert.type} dismissible onClose={() => setAlert({ show: false, message: '', type: '' })}>
+                                {alert.message}
+                            </CAlert>
+                        )}
+
                         <p className="text-body-secondary small">
-                            You can add employee details through this form. Fill in the required fields and click on "Save" to submit the form.
+                            Update employee details through this form. Modify the required fields and click on "Update Employee" to save changes.
                         </p>
 
                         <CForm className="row g-3" onSubmit={handleSubmit}>
@@ -279,6 +357,33 @@ const AddEmployee = () => {
                                 />
                             </CCol>
 
+                            {/* Additional Information */}
+                            <CCol xs={12}>
+                                <CCard className="bg-light">
+                                    <CCardBody>
+                                        <h6 className="mb-3">Additional Information</h6>
+                                        <CRow>
+                                            <CCol md={4}>
+                                                <small className="text-muted">Employee ID</small>
+                                                <div className="fw-semibold">{formData.employee_id}</div>
+                                            </CCol>
+                                            <CCol md={4}>
+                                                <small className="text-muted">Last Updated</small>
+                                                <div className="fw-semibold">
+                                                    {formData.updated_at ? new Date(formData.updated_at).toLocaleDateString() : 'N/A'}
+                                                </div>
+                                            </CCol>
+                                            <CCol md={4}>
+                                                <small className="text-muted">Created Date</small>
+                                                <div className="fw-semibold">
+                                                    {formData.created_at ? new Date(formData.created_at).toLocaleDateString() : 'N/A'}
+                                                </div>
+                                            </CCol>
+                                        </CRow>
+                                    </CCardBody>
+                                </CCard>
+                            </CCol>
+
                             {/* Action Buttons */}
                             <CCol xs={12}>
                                 <div className="d-flex gap-2">
@@ -290,10 +395,13 @@ const AddEmployee = () => {
                                         {loading ? (
                                             <>
                                                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Saving...
+                                                Updating...
                                             </>
                                         ) : (
-                                            'Save Employee'
+                                            <>
+                                                <CIcon icon={cilSave} className="me-2" />
+                                                Update Employee
+                                            </>
                                         )}
                                     </CButton>
                                     <CButton
@@ -303,7 +411,16 @@ const AddEmployee = () => {
                                         onClick={resetForm}
                                         disabled={loading}
                                     >
-                                        Reset Form
+                                        Reset Changes
+                                    </CButton>
+                                    <CButton
+                                        type="button"
+                                        color="danger"
+                                        variant="outline"
+                                        onClick={handleCancel}
+                                        disabled={loading}
+                                    >
+                                        Cancel
                                     </CButton>
                                 </div>
                             </CCol>
@@ -315,4 +432,4 @@ const AddEmployee = () => {
     )
 }
 
-export default AddEmployee
+export default EditEmployee
