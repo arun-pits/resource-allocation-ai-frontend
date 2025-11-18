@@ -80,8 +80,8 @@ const _nav = [
             },
             {
                 component: CNavItem,
-                name: 'View Projects',
-                to: '/project/view-project',
+                name: 'List Projects',
+                to: '/project/list-project',
             },
         ],
     },
@@ -162,29 +162,6 @@ const _nav = [
             },
             {
                 component: CNavItem,
-                name: 'Smart Pagination',
-                href: 'https://coreui.io/react/docs/components/smart-pagination/',
-                badge: {
-                    color: 'danger',
-                    text: 'PRO',
-                },
-            },
-            {
-                component: CNavItem,
-                name: (
-                    <React.Fragment>
-                        {'Smart Table'}
-                        <CIcon icon={cilExternalLink} size="sm" className="ms-2" />
-                    </React.Fragment>
-                ),
-                href: 'https://coreui.io/react/docs/components/smart-table/',
-                badge: {
-                    color: 'danger',
-                    text: 'PRO',
-                },
-            },
-            {
-                component: CNavItem,
                 name: 'Spinners',
                 to: '/base/spinners',
             },
@@ -203,20 +180,7 @@ const _nav = [
                 name: 'Tooltips',
                 to: '/base/tooltips',
             },
-            {
-                component: CNavItem,
-                name: (
-                    <React.Fragment>
-                        {'Virtual Scroller'}
-                        <CIcon icon={cilExternalLink} size="sm" className="ms-2" />
-                    </React.Fragment>
-                ),
-                href: 'https://coreui.io/react/docs/components/virtual-scroller/',
-                badge: {
-                    color: 'danger',
-                    text: 'PRO',
-                },
-            },
+
         ],
     },
     {

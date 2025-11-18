@@ -34,8 +34,10 @@ const EditEmployee = React.lazy(() => import('./views/employee/edit-employee/Edi
 
 
 // Projects
+const ListProject = React.lazy(() => import('./views/project/list-project/ListProject'))
 const AddProject = React.lazy(() => import('./views/project/add-project/AddProject'))
 const ViewProject = React.lazy(() => import('./views/project/view-project/ViewProject'))
+const EditProject = React.lazy(() => import('./views/project/edit-project/EditProject'))
 
 //Forms
 const ChecksRadios = React.lazy(() => import('./views/forms/checks-radios/ChecksRadios'))
@@ -114,8 +116,10 @@ const routes = [
     { path: '/employee/view-employee/:id', name: 'ViewEmployee', element: ViewEmployee },
     { path: '/employee/edit-employee/:id', name: 'EditEmployee', element: EditEmployee },
 
+    { path: '/project/list-project', name: 'ListProject', element: ListProject },
     { path: '/project/add-project', name: 'AddProject', element: AddProject },
-    { path: '/project/view-project', name: 'ViewProject', element: ViewProject },
+    { path: '/project/view-project/:id', name: 'ViewProject', element: ViewProject },
+    { path: '/project/edit-project/:id', name: 'EditProject', element: EditProject },
 ]
 
 export default routes

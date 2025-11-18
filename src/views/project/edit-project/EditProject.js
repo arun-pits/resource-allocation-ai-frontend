@@ -5,31 +5,36 @@ import {
     CCardBody,
     CCardHeader,
     CCol,
+    CRow,
+    CBadge,
+    CSpinner,
+    CAlert,
+    CListGroup,
+    CListGroupItem,
+    CProgress,
     CForm,
     CFormInput,
     CFormLabel,
     CFormTextarea,
-    CFormSelect,
-    CRow,
-    CAlert,
-    CSpinner,
-    CListGroup,
-    CListGroupItem,
-    CBadge,
-    CProgress
+    CFormSelect
 } from '@coreui/react'
+import { useParams, useNavigate } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
 import {
+    cilBriefcase,
+    cilUser,
+    cilLink,
+    cilCalendar,
     cilPlus,
     cilTrash,
-    cilCalendar,
-    cilUser,
-    cilBriefcase,
-    cilLink,
-    cilChart
+    cilArrowLeft,
+    cilPencil
 } from '@coreui/icons'
 
-const AddProject = () => {
+const EditProject = () => {
+    const { id } = useParams()
+    const navigate = useNavigate()
+
     const [formData, setFormData] = useState({
         project_id: '',
         project_name: '',
@@ -46,11 +51,69 @@ const AddProject = () => {
         { employee_id: '', allocation: '' }
     ]);
 
-    const [allEmployees, setAllEmployees] = useState([]); // Employees from DB
+    const [allEmployees, setAllEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
+    const [projectLoading, setProjectLoading] = useState(true);
     const [errors, setErrors] = useState({});
     const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+
+    // Fetch project data
+    useEffect(() => {
+        const fetchProject = async () => {
+            try {
+                setProjectLoading(true);
+                const response = await fetch(`http://localhost:8000/api/projects/${id}/`);
+
+                if (!response.ok) {
+                    throw new Error('Project not found');
+                }
+
+                const projectData = await response.json();
+
+                // Set form data
+                setFormData({
+                    project_id: projectData.project_id || '',
+                    project_name: projectData.project_name || '',
+                    description: projectData.description || '',
+                    project_manager: projectData.project_manager || '',
+                    department: projectData.department || '',
+                    url: projectData.url || '',
+                    devops_url: projectData.devops_url || '',
+                    start_date: projectData.start_date || '',
+                    end_date: projectData.end_date || ''
+                });                // Fetch project allocations
+                const allocationsResponse = await fetch(`http://localhost:8000/api/projects/${id}/allocations/`);
+                if (allocationsResponse.ok) {
+                    const allocationsData = await allocationsResponse.json();
+                    console.log('Allocations data received:', allocationsData);
+
+                    if (allocationsData.allocations && allocationsData.allocations.length > 0) {
+                        setEmployees(allocationsData.allocations.map(allocation => ({
+                            employee_id: allocation.employee.id.toString(),
+                            allocation: allocation.allocation.toString()
+                        })));
+                    } else {
+                        // If no allocations, ensure at least one empty row
+                        setEmployees([{ employee_id: '', allocation: '' }]);
+                    }
+                } else {
+                    console.error('Failed to fetch allocations');
+                    setEmployees([{ employee_id: '', allocation: '' }]);
+                }
+
+            } catch (error) {
+                console.error('Error fetching project:', error);
+                showAlert('Error loading project data. Project may not exist.', 'danger');
+            } finally {
+                setProjectLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchProject();
+        }
+    }, [id]);
 
     // Fetch all employees from database
     useEffect(() => {
@@ -59,15 +122,16 @@ const AddProject = () => {
                 setFetchLoading(true);
                 const response = await fetch('http://localhost:8000/api/employees/');
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch employees');
+                if (response.ok) {
+                    const data = await response.json();
+                    setAllEmployees(Array.isArray(data) ? data : data.employees || []);
+                } else {
+                    console.error('Failed to fetch employees');
+                    showAlert('Failed to load employees list', 'warning');
                 }
-
-                const data = await response.json();
-                setAllEmployees(data.employees || data);
             } catch (error) {
                 console.error('Error fetching employees:', error);
-                showAlert('Failed to load employees list. Please refresh the page.', 'danger');
+                showAlert('Error loading employees list', 'danger');
             } finally {
                 setFetchLoading(false);
             }
@@ -94,8 +158,8 @@ const AddProject = () => {
         if (field === 'employee_id' && value) {
             const selectedEmployee = allEmployees.find(emp => emp.id === parseInt(value));
             if (selectedEmployee) {
-                // You can store additional employee info if needed
-                updatedEmployees[index].employee_data = selectedEmployee;
+                // Could add auto-fill logic here if needed
+                console.log('Selected employee:', selectedEmployee);
             }
         }
 
@@ -182,20 +246,18 @@ const AddProject = () => {
             if (!employee.employee_id) {
                 newErrors[`employees_${index}_employee_id`] = 'Please select an employee';
             } else {
-                // Check for duplicate employees
                 if (usedEmployeeIds.has(employee.employee_id)) {
-                    newErrors[`employees_${index}_employee_id`] = 'Employee already added to project';
-                } else {
-                    usedEmployeeIds.add(employee.employee_id);
+                    newErrors[`employees_${index}_employee_id`] = 'This employee is already assigned to this project';
                 }
+                usedEmployeeIds.add(employee.employee_id);
             }
 
             if (!employee.allocation) {
                 newErrors[`employees_${index}_allocation`] = 'Allocation percentage is required';
             } else {
                 const allocation = parseFloat(employee.allocation);
-                if (isNaN(allocation) || allocation < 0 || allocation > 100) {
-                    newErrors[`employees_${index}_allocation`] = 'Allocation must be between 0 and 100';
+                if (isNaN(allocation) || allocation <= 0 || allocation > 100) {
+                    newErrors[`employees_${index}_allocation`] = 'Allocation must be between 0.1 and 100';
                 } else {
                     totalAllocation += allocation;
                 }
@@ -236,7 +298,9 @@ const AddProject = () => {
         }
 
         setLoading(true);
-        setErrors({}); try {
+        setErrors({});
+
+        try {
             const payload = {
                 ...formData,
                 allocations: employees.map(emp => ({
@@ -245,53 +309,44 @@ const AddProject = () => {
                 }))
             };
 
-            console.log('Submitting project data:', payload);
+            console.log('Updating project data:', payload);
 
-            // Adjust the URL to your Django endpoint
-            const response = await fetch('http://localhost:8000/api/projects/', {
-                method: 'POST',
+            const response = await fetch(`http://localhost:8000/api/projects/${id}/`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(payload)
             });
 
-            const responseData = await response.json();
-
             if (response.ok) {
-                showAlert('Project created successfully!', 'success');
-                resetForm();
+                const result = await response.json();
+                console.log('Project updated successfully:', result);
+                showAlert('Project updated successfully!', 'success');
+
+                // Navigate back to project details after a delay
+                setTimeout(() => {
+                    navigate(`/view-project/${id}`);
+                }, 2000);
             } else {
-                if (responseData.errors) {
-                    setErrors(responseData.errors);
-                    showAlert('Please fix the form errors.', 'warning');
-                } else {
-                    showAlert(`Error creating project: ${responseData.message || 'Unknown error'}`, 'danger');
+                const errorData = await response.json();
+                console.error('Server validation errors:', errorData);
+
+                if (errorData.errors) {
+                    setErrors(errorData.errors);
                 }
-                console.error('Server error response:', responseData);
+
+                showAlert(
+                    errorData.message || 'Failed to update project. Please check the form for errors.',
+                    'danger'
+                );
             }
         } catch (error) {
-            console.error('Network error:', error);
-            showAlert('Network error: Could not connect to server.', 'danger');
+            console.error('Error updating project:', error);
+            showAlert('Network error occurred. Please try again.', 'danger');
         } finally {
             setLoading(false);
         }
-    }
-
-    const resetForm = () => {
-        setFormData({
-            project_id: '',
-            project_name: '',
-            description: '',
-            project_manager: '',
-            department: '',
-            url: '',
-            devops_url: '',
-            start_date: '',
-            end_date: ''
-        });
-        setEmployees([{ employee_id: '', allocation: '' }]);
-        setErrors({});
     }
 
     const getSelectedEmployeeName = (employeeId) => {
@@ -299,17 +354,55 @@ const AddProject = () => {
         return employee ? `${employee.first_name} ${employee.last_name} (${employee.designation})` : '';
     }
 
+    // Show loading state while fetching project
+    if (projectLoading) {
+        return (
+            <CRow>
+                <CCol xs={12}>
+                    <CCard className="mb-4">
+                        <CCardBody className="text-center py-5">
+                            <CSpinner color="primary" size="lg" />
+                            <div className="mt-3">
+                                <h5>Loading Project Details...</h5>
+                                <p className="text-muted">Please wait while we fetch the project information</p>
+                            </div>
+                        </CCardBody>
+                    </CCard>
+                </CCol>
+            </CRow>
+        );
+    }
+
     const totalAllocation = calculateTotalAllocation();
 
     return (
         <CRow>
             <CCol xs={12}>
+                {/* Header Actions */}
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <CButton
+                            color="secondary"
+                            variant="outline"
+                            onClick={() => navigate('/projects')}
+                            className="mb-2"
+                        >
+                            <CIcon icon={cilArrowLeft} className="me-2" />
+                            Back to Projects
+                        </CButton>
+                        <h2 className="mb-0">Edit Project</h2>
+                    </div>
+                </div>
+
                 <CCard className="mb-4">
                     <CCardHeader>
                         <div className="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>Add New Project</strong>
-                                <small> Create and manage project details</small>
+                                <strong>
+                                    <CIcon icon={cilPencil} className="me-2" />
+                                    Edit Project Details
+                                </strong>
+                                <small className="d-block mt-1">Update project information and team allocations</small>
                             </div>
                         </div>
                     </CCardHeader>
@@ -321,7 +414,7 @@ const AddProject = () => {
                         )}
 
                         <p className="text-body-secondary small mb-4">
-                            Create a new project by filling in the details below. All fields marked with <span className="text-danger">*</span> are required.
+                            Update the project details below. All fields marked with <span className="text-danger">*</span> are required.
                         </p>
 
                         <CForm className="row g-3" onSubmit={handleSubmit}>
@@ -644,20 +737,20 @@ const AddProject = () => {
                                         {loading ? (
                                             <>
                                                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Creating Project...
+                                                Updating Project...
                                             </>
                                         ) : (
-                                            'Create Project'
+                                            'Update Project'
                                         )}
                                     </CButton>
                                     <CButton
                                         type="button"
                                         color="secondary"
                                         variant="outline"
-                                        onClick={resetForm}
-                                        disabled={loading || fetchLoading}
+                                        onClick={() => navigate(`/view-project/${id}`)}
+                                        disabled={loading}
                                     >
-                                        Reset Form
+                                        Cancel
                                     </CButton>
                                 </div>
                             </CCol>
@@ -669,4 +762,4 @@ const AddProject = () => {
     )
 }
 
-export default AddProject
+export default EditProject

@@ -12,7 +12,8 @@ import {
     CListGroup,
     CListGroupItem,
     CProgress,
-    CTooltip
+    CTooltip,
+    CProgressBar
 } from '@coreui/react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
@@ -30,7 +31,10 @@ import {
     cilClock,
     // cilIdBadge,
     cilStar,
-    cilChartLine
+    cilChartLine,
+    cilChartPie,
+    cilTask,
+    cilWarning
 } from '@coreui/icons'
 
 const ViewEmployee = () => {
@@ -38,6 +42,7 @@ const ViewEmployee = () => {
     const navigate = useNavigate()
 
     const [employee, setEmployee] = useState(null)
+    const [projects, setProjects] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [deleteLoading, setDeleteLoading] = useState(false)
@@ -61,11 +66,28 @@ const ViewEmployee = () => {
         } finally {
             setLoading(false)
         }
+    }    // In ViewEmployee.js - Update the fetchEmployeeProjects function
+    const fetchEmployeeProjects = async () => {
+        try {
+            // Using the class-based action endpoint
+            const response = await fetch(`http://localhost:8000/api/employees/${id}/projects/`)
+
+            if (response.ok) {
+                const projectsData = await response.json()
+                setProjects(projectsData.projects || projectsData)
+            } else {
+                setProjects([])
+            }
+        } catch (err) {
+            console.error('Error fetching employee projects:', err)
+            setProjects([])
+        }
     }
 
     useEffect(() => {
         if (id) {
             fetchEmployee()
+            fetchEmployeeProjects()
         }
     }, [id])
 
@@ -91,6 +113,57 @@ const ViewEmployee = () => {
             alert('Network error: Could not delete employee')
         } finally {
             setDeleteLoading(false)
+        }
+    }
+
+    // Calculate allocation statistics
+    const calculateAllocationStats = () => {
+        if (!projects.length) {
+            return {
+                totalAllocation: 0,
+                projectCount: 0,
+                allocationStatus: 'No Projects',
+                statusColor: 'secondary',
+                overallocated: false,
+                underallocated: false,
+                perfectlyAllocated: false
+            }
+        }
+
+        const totalAllocation = projects.reduce((sum, project) => {
+            const allocation = project.allocation || project.employee_allocation || 0
+            return sum + parseFloat(allocation)
+        }, 0)
+
+        const projectCount = projects.length
+        const overallocated = totalAllocation > 100
+        const underallocated = totalAllocation < 100
+        const perfectlyAllocated = totalAllocation === 100
+
+        let allocationStatus, statusColor
+
+        if (perfectlyAllocated) {
+            allocationStatus = 'Perfectly Allocated'
+            statusColor = 'success'
+        } else if (overallocated) {
+            allocationStatus = 'Overallocated'
+            statusColor = 'danger'
+        } else if (underallocated) {
+            allocationStatus = 'Underallocated'
+            statusColor = 'warning'
+        } else {
+            allocationStatus = 'No Projects'
+            statusColor = 'secondary'
+        }
+
+        return {
+            totalAllocation: Math.round(totalAllocation * 10) / 10, // Round to 1 decimal
+            projectCount,
+            allocationStatus,
+            statusColor,
+            overallocated,
+            underallocated,
+            perfectlyAllocated
         }
     }
 
@@ -194,6 +267,8 @@ const ViewEmployee = () => {
         )
     }
 
+    const allocationStats = calculateAllocationStats()
+
     return (
         <CRow>
             <CCol xs={12}>
@@ -240,6 +315,150 @@ const ViewEmployee = () => {
                         </CTooltip>
                     </div>
                 </div>
+
+                {/* Resource Allocation Summary Section */}
+                <CCard className="mb-4 shadow border-0 overflow-hidden rounded">
+                    <CCardBody className="p-4 bg-white">
+                        {/* Header */}
+                        <div className="d-flex align-items-center mb-4">
+                            <div className="bg-primary text-white rounded-circle p-3 me-3 d-flex justify-content-center align-items-center" style={{ width: 56, height: 56 }}>
+                                <CIcon icon={cilChartPie} size="xl" />
+                            </div>
+                            <div>
+                                <h5 className="mb-1 fw-bold text-dark">Resource Allocation Summary</h5>
+                                <p className="mb-0 text-secondary small">
+                                    Current workload distribution across all projects
+                                </p>
+                            </div>
+                        </div>
+
+                        <CRow className="g-3 mb-4">
+                            {/* Basic color statistic blocks */}
+                            <CCol sm={6} md={3}>
+                                <div className="text-center p-3 border rounded bg-primary bg-opacity-10">
+                                    <div className="h3 fw-bold text-primary">{allocationStats.totalAllocation}%</div>
+                                    <small className="text-secondary fw-semibold">Total Allocation</small>
+                                </div>
+                            </CCol>
+                            <CCol sm={6} md={3}>
+                                <div className="text-center p-3 border rounded bg-success bg-opacity-10">
+                                    <div className="h3 fw-bold text-success">{allocationStats.projectCount}</div>
+                                    <small className="text-secondary fw-semibold">Active Projects</small>
+                                </div>
+                            </CCol>
+                            <CCol sm={6} md={3}>
+                                <div className="text-center p-3 border rounded bg-warning bg-opacity-10">
+                                    <CBadge color={allocationStats.statusColor} className="fw-semibold px-3 py-2">
+                                        {allocationStats.allocationStatus}
+                                    </CBadge>
+                                    <small className="d-block mt-2 text-secondary fw-semibold">Status</small>
+                                </div>
+                            </CCol>
+                            <CCol sm={6} md={3}>
+                                <div className="text-center p-3 border rounded bg-info bg-opacity-10">
+                                    <div className="h3 fw-bold text-info">{Math.max(0, 100 - allocationStats.totalAllocation)}%</div>
+                                    <small className="text-secondary fw-semibold">Available</small>
+                                </div>
+                            </CCol>
+                        </CRow>
+
+                        {/* Circular Progress */}
+                        <div className="d-flex justify-content-center mb-4">
+                            <div
+                                className="rounded-circle d-flex flex-column justify-content-center align-items-center border"
+                                style={{ width: 140, height: 140, borderColor: '#888' }}
+                            >
+                                <div className="h2 fw-bold text-dark">{allocationStats.totalAllocation}%</div>
+                                <small className="text-secondary">Allocated</small>
+                            </div>
+                        </div>
+
+                        <CProgress className="mb-3" >
+                            <CProgressBar
+                                value={Math.min(allocationStats.totalAllocation, 100)}
+                                color={
+                                    allocationStats.overallocated ? 'danger' :
+                                        allocationStats.perfectlyAllocated ? 'success' : 'warning'
+                                }
+                                animated={allocationStats.overallocated}
+                            />
+                            {allocationStats.overallocated && (
+                                <CProgressBar
+                                    value={allocationStats.totalAllocation - 100}
+                                    color="danger"
+                                    animated
+                                // style={{ opacity: 0.8 }}
+                                />
+                            )}
+                        </CProgress>
+
+                        <div className="text-center mb-4">
+                            <small className="text-muted fw-semibold">
+                                {allocationStats.overallocated ? (
+                                    <>
+                                        <CIcon icon={cilWarning} className="me-1 text-danger" />
+                                        Overallocated by {(allocationStats.totalAllocation - 100).toFixed(1)}%
+                                    </>
+                                ) : allocationStats.perfectlyAllocated ? (
+                                    <>
+                                        <CIcon icon={cilStar} className="me-1 text-success" />
+                                        Perfectly allocated
+                                    </>
+                                ) : (
+                                    <>
+                                        <CIcon icon={cilChartLine} className="me-1 text-info" />
+                                        {(100 - allocationStats.totalAllocation).toFixed(1)}% capacity available
+                                    </>
+                                )}
+                            </small>
+                        </div>
+
+                        {/* Project Breakdown */}
+                        {allocationStats.projectCount > 0 && (
+                            <div>
+                                <div className="d-flex align-items-center mb-3">
+                                    <CIcon icon={cilTask} size="lg" className="me-2 text-primary" />
+                                    <h6 className="fw-bold text-dark mb-0">Project Allocation Breakdown</h6>
+                                </div>
+
+                                <CRow className="g-3">
+                                    {projects.slice(0, 4).map((project) => (
+                                        <CCol key={project.id} sm={6} lg={3}>
+                                            <div className="p-3 border rounded h-100 bg-light">
+                                                <div className="fw-semibold text-truncate mb-1" title={project.project_name} style={{ fontSize: '0.9rem' }}>
+                                                    {project.project_name}
+                                                </div>
+                                                <small className="text-secondary pe-2">Project #{project.project_id || project.id}</small>
+
+                                                <CBadge color="primary" className="fw-semibold px-3 py-1 mt-2">
+                                                    {project.allocation || project.employee_allocation}%
+                                                </CBadge>
+
+                                                <CProgress
+                                                    height={8}
+                                                    className="mt-2"
+                                                    value={project.allocation || project.employee_allocation}
+                                                    color="primary"
+                                                    aria-label={`Progress of ${project.project_name}`}
+                                                />
+                                            </div>
+                                        </CCol>
+                                    ))}
+
+                                    {projects.length > 4 && (
+                                        <CCol sm={6} lg={3}>
+                                            <div className="p-4 border rounded h-100 d-flex flex-column align-items-center justify-content-center bg-light text-primary fw-bold">
+                                                +{projects.length - 4}
+                                                <small className="mt-1 fw-normal">more projects</small>
+                                            </div>
+                                        </CCol>
+                                    )}
+                                </CRow>
+                            </div>
+                        )}
+                    </CCardBody>
+                </CCard>
+
 
                 {/* Employee Profile Card */}
                 <CCard className="mb-4">
