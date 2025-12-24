@@ -6,17 +6,17 @@ export const AuthProvider = ({ children }) => {
     const [authenticated, setAuthenticated] = useState(false)
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('access_token')
         setAuthenticated(!!token)
     }, [])
 
     const login = (token) => {
-        localStorage.setItem('token', token)
+        localStorage.setItem('access_token', token)
         setAuthenticated(true)
     }
 
     const logout = () => {
-        localStorage.removeItem('token')
+        localStorage.removeItem('access_token')
         setAuthenticated(false)
     }
 

@@ -19,7 +19,7 @@ import { AuthContext } from '../../../context/AuthContext'
 
 const Login = () => {
     const navigate = useNavigate();
-    const { setIsAuthenticated, setToken } = useContext(AuthContext);
+    const { login } = useContext(AuthContext);
 
     const [formData, setFormData] = useState({
         username: '',
@@ -75,11 +75,9 @@ const Login = () => {
                 return
             }
 
-            setIsAuthenticated(true);
-            setToken(data.token);
+            login(data.token)
 
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("auth", "true");
+            localStorage.setItem("auth", "true")
 
             // ✅ Save tokens
             localStorage.setItem('access_token', data.access)

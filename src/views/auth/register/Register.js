@@ -130,7 +130,7 @@ const Register = () => {
                                                 <CInputGroupText>
                                                     <CIcon icon={cilUser} />
                                                 </CInputGroupText>
-                                                <CFormInput placeholder="Firstname" id="first_name" onChange={handleChange} />
+                                                <CFormInput placeholder="Firstname" value={formData.first_name} id="first_name" onChange={handleChange} />
                                             </CInputGroup>
                                             {errors.first_name && (
                                                 <div className="text-danger small mt-1">{errors.first_name}</div>
@@ -143,7 +143,7 @@ const Register = () => {
                                                 <CInputGroupText>
                                                     <CIcon icon={cilUser} />
                                                 </CInputGroupText>
-                                                <CFormInput placeholder="Lastname" id="last_name" onChange={handleChange} />
+                                                <CFormInput placeholder="Lastname" value={formData.last_name} id="last_name" onChange={handleChange} />
                                             </CInputGroup>
                                             {errors.last_name && (
                                                 <div className="text-danger small mt-1">{errors.last_name}</div>
@@ -155,7 +155,7 @@ const Register = () => {
                                                 <CInputGroupText>
                                                     <CIcon icon={cilUser} />
                                                 </CInputGroupText>
-                                                <CFormInput placeholder="Username" id="username" onChange={handleChange} />
+                                                <CFormInput placeholder="Username" value={formData.username} id="username" onChange={handleChange} />
                                             </CInputGroup>
                                             {errors.username && (
                                                 <div className="text-danger small mt-1">{errors.username}</div>
@@ -165,7 +165,7 @@ const Register = () => {
                                         <div className="mb-3">
                                             <CInputGroup>
                                                 <CInputGroupText>@</CInputGroupText>
-                                                <CFormInput placeholder="Email" id="email" autoComplete="email" onChange={handleChange} />
+                                                <CFormInput placeholder="Email" value={formData.email} id="email" autoComplete="email" onChange={handleChange} />
                                             </CInputGroup>
                                             {errors.email && (
                                                 <div className="text-danger small mt-1">{errors.email}</div>
@@ -180,6 +180,7 @@ const Register = () => {
                                                 <CFormInput
                                                     type="password"
                                                     placeholder="Password"
+                                                    value={formData.password}
                                                     autoComplete="new-password"
                                                     id="password"
                                                     onChange={handleChange}
@@ -198,6 +199,7 @@ const Register = () => {
                                                 <CFormInput
                                                     type="password"
                                                     placeholder="Repeat password"
+                                                    value={formData.confirm_password}
                                                     autoComplete="new-password"
                                                     id="confirm_password"
                                                     onChange={handleChange}
