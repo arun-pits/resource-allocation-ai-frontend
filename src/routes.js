@@ -26,19 +26,6 @@ const Buttons = React.lazy(() => import('./views/buttons/buttons/Buttons'))
 const ButtonGroups = React.lazy(() => import('./views/buttons/button-groups/ButtonGroups'))
 const Dropdowns = React.lazy(() => import('./views/buttons/dropdowns/Dropdowns'))
 
-// Employees
-const ListEmployee = React.lazy(() => import('./views/employee/list-employee/ListEmployee'))
-const AddEmployee = React.lazy(() => import('./views/employee/add-employee/AddEmployee'))
-const ViewEmployee = React.lazy(() => import('./views/employee/view-employee/ViewEmployee'))
-const EditEmployee = React.lazy(() => import('./views/employee/edit-employee/EditEmployee'))
-
-
-// Projects
-const ListProject = React.lazy(() => import('./views/project/list-project/ListProject'))
-const AddProject = React.lazy(() => import('./views/project/add-project/AddProject'))
-const ViewProject = React.lazy(() => import('./views/project/view-project/ViewProject'))
-const EditProject = React.lazy(() => import('./views/project/edit-project/EditProject'))
-
 //Forms
 const ChecksRadios = React.lazy(() => import('./views/forms/checks-radios/ChecksRadios'))
 const FloatingLabels = React.lazy(() => import('./views/forms/floating-labels/FloatingLabels'))
@@ -63,6 +50,25 @@ const Modals = React.lazy(() => import('./views/notifications/modals/Modals'))
 const Toasts = React.lazy(() => import('./views/notifications/toasts/Toasts'))
 
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
+
+/**
+ * Resourse allocation tool sections starts here
+ */
+
+// Employees
+const ListEmployee = React.lazy(() => import('./views/employee/list-employee/ListEmployee'))
+const AddEmployee = React.lazy(() => import('./views/employee/add-employee/AddEmployee'))
+const ViewEmployee = React.lazy(() => import('./views/employee/view-employee/ViewEmployee'))
+const EditEmployee = React.lazy(() => import('./views/employee/edit-employee/EditEmployee'))
+
+// Projects
+const ListProject = React.lazy(() => import('./views/project/list-project/ListProject'))
+const AddProject = React.lazy(() => import('./views/project/add-project/AddProject'))
+const ViewProject = React.lazy(() => import('./views/project/view-project/ViewProject'))
+const EditProject = React.lazy(() => import('./views/project/edit-project/EditProject'))
+
+// const LoginPage = React.lazy(() => import('./views/auth/login/Login'))
+// const RegisterPage = React.lazy(() => import('./views/auth/register/Register'))
 
 const routes = [
     { path: '/', exact: true, name: 'Home' },
@@ -110,6 +116,13 @@ const routes = [
     { path: '/notifications/modals', name: 'Modals', element: Modals },
     { path: '/notifications/toasts', name: 'Toasts', element: Toasts },
     { path: '/widgets', name: 'Widgets', element: Widgets },
+
+    /**
+     * Resourse allocation tool sections starts here
+     */
+
+    // { path: '/login', name: 'LoginPage', element: LoginPage },
+    // { path: '/register', name: 'RegisterPage', element: RegisterPage },
 
     { path: '/employee/list-employee', name: 'ListEmployee', element: ListEmployee },
     { path: '/employee/add-employee', name: 'AddEmployee', element: AddEmployee },
